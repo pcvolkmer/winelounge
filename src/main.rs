@@ -1,4 +1,5 @@
 mod player;
+mod sprite;
 mod world;
 
 use std::time::Duration;
@@ -107,8 +108,7 @@ fn main() {
             } else if content == BoxAreaContent::FilledBottle && world.player.can_fill_glass() {
                 ba.update_content(BoxAreaContent::EmptyBottle);
                 world.player.fill_glass();
-            } else if content == BoxAreaContent::FilledBottle && !world.player.can_fill_glass()
-            {
+            } else if content == BoxAreaContent::FilledBottle && !world.player.can_fill_glass() {
                 ba.update_content(BoxAreaContent::FilledBottle);
             }
         }

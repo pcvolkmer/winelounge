@@ -1,5 +1,7 @@
-use crate::GLASS_SPACE;
+use crate::sprite::Sprite;
+use crate::{sprite, GLASS_SPACE};
 use sdl2::rect::{Point, Rect};
+use sdl2::render::{Texture, WindowCanvas};
 
 pub struct Player {
     pub position: Point,
@@ -65,19 +67,26 @@ impl Player {
         Rect::new(self.position.x(), self.position.y(), 40, 115)
     }
 
-    pub fn sprite(&self) -> Rect {
-        let x = match self.footstep {
-            1 => 60,
-            2 => 115,
-            _ => 5,
+    pub fn render(&self, canvas: &mut WindowCanvas, texture: &Texture) {
+        let direction = match self.direction {
+            PlayerDirection::Down => sprite::PlayerDirection::Down,
+            PlayerDirection::Left => sprite::PlayerDirection::Left,
+            PlayerDirection::Right => sprite::PlayerDirection::Right,
+            PlayerDirection::Up => sprite::PlayerDirection::Up,
         };
 
-        match self.direction {
-            PlayerDirection::Down => Rect::new(x, 5, 40, 115),
-            PlayerDirection::Left => Rect::new(x, 255, 40, 115),
-            PlayerDirection::Right => Rect::new(x, 130, 40, 115),
-            PlayerDirection::Up => Rect::new(x, 380, 40, 115),
-        }
+        let footstep = match self.footstep {
+            1 => sprite::PlayerFootstep::Left,
+            2 => sprite::PlayerFootstep::Right,
+            _ => sprite::PlayerFootstep::None,
+        };
+
+        Sprite::Player(direction, footstep).render(
+            canvas,
+            texture,
+            self.position.x(),
+            self.position.y(),
+        );
     }
 
     pub fn face_up(&mut self) {

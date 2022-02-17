@@ -1,3 +1,4 @@
+use crate::sprite::Sprite;
 use crate::{Player, GLASS_SPACE};
 use sdl2::pixels::Color;
 use sdl2::rect::{Point, Rect};
@@ -146,27 +147,15 @@ impl World {
             canvas.fill_rect(Rect::new(5, 37, GLASS_SPACE as u32 * 25 + 5, 4));
 
             if self.player.filled_glasses + self.player.empty_glasses >= i {
-                canvas.copy(
-                    texture,
-                    Rect::new(35, 510, 20, 25),
-                    Rect::new((i as i32) * 25 - 15, 10, 20, 25),
-                );
+                Sprite::GlassEmpty.render(canvas, texture, (i as i32) * 25 - 15, 10);
             }
             if self.player.filled_glasses >= i {
-                canvas.copy(
-                    texture,
-                    Rect::new(5, 510, 20, 25),
-                    Rect::new((i as i32) * 25 - 15, 10, 20, 25),
-                );
+                Sprite::GlassFilled.render(canvas, texture, (i as i32) * 25 - 15, 10);
             }
         });
 
         // Lounge
-        canvas.copy(
-            texture,
-            Rect::new(5, 700, 150, 95),
-            Rect::new(325, 260, 150, 95),
-        );
+        Sprite::Lounge.render(canvas, texture, 325, 260);
 
         // Box Areas
         self.right_top_box_area.render(canvas, texture);
@@ -175,52 +164,20 @@ impl World {
         self.left_top_box_area.render(canvas, texture);
 
         // Decoration
-        canvas.copy(
-            texture,
-            Rect::new(130, 550, 25, 25),
-            Rect::new(235, 130, 25, 25),
-        );
-        canvas.copy(
-            texture,
-            Rect::new(130, 550, 25, 25),
-            Rect::new(120, 210, 25, 25),
-        );
-        canvas.copy(
-            texture,
-            Rect::new(130, 550, 25, 25),
-            Rect::new(535, 150, 25, 25),
-        );
-        canvas.copy(
-            texture,
-            Rect::new(130, 550, 25, 25),
-            Rect::new(435, 370, 25, 25),
-        );
-        canvas.copy(
-            texture,
-            Rect::new(130, 550, 25, 25),
-            Rect::new(235, 470, 25, 25),
-        );
-        canvas.copy(
-            texture,
-            Rect::new(130, 550, 25, 25),
-            Rect::new(555, 510, 25, 25),
-        );
+        Sprite::Flower.render(canvas, texture, 235, 130);
+        Sprite::Flower.render(canvas, texture, 120, 210);
+        Sprite::Flower.render(canvas, texture, 535, 150);
+        Sprite::Flower.render(canvas, texture, 435, 370);
+        Sprite::Flower.render(canvas, texture, 235, 470);
+        Sprite::Flower.render(canvas, texture, 555, 510);
 
         // Stops
         for s in &self.stops {
-            canvas.copy(
-                texture,
-                Rect::new(130, 510, 25, 25),
-                Rect::new(s.x(), s.y(), 25, 25),
-            );
+            Sprite::Stone.render(canvas, texture, s.x(), s.y())
         }
 
         // Player
-        canvas.copy(
-            texture,
-            self.player.sprite(),
-            Rect::new(self.player.position.x(), self.player.position.y(), 40, 115),
-        );
+        self.player.render(canvas, texture);
 
         // Points
         let x = font
@@ -311,48 +268,30 @@ impl BoxArea {
         let y_offset = self.bounding_rect().y();
 
         // Border
-        canvas.copy(
-            texture,
-            Rect::new(70, 510, 50, 25),
-            Rect::new(x_offset + 30, y_offset, 50, 25),
-        );
-        canvas.copy(
-            texture,
-            Rect::new(70, 510, 50, 25),
-            Rect::new(x_offset + 30, y_offset + 85, 50, 25),
-        );
-        let dst = match self.position {
-            BoxAreaPosition::RightTop => Rect::new(x_offset + 85, y_offset + 30, 25, 50),
-            BoxAreaPosition::RightBottom => Rect::new(x_offset + 85, y_offset + 30, 25, 50),
-            BoxAreaPosition::LeftBottom => Rect::new(x_offset, y_offset + 30, 25, 50),
-            BoxAreaPosition::LeftTop => Rect::new(x_offset, y_offset + 30, 25, 50),
+        Sprite::BushHorizontal.render(canvas, texture, x_offset + 30, y_offset);
+        Sprite::BushHorizontal.render(canvas, texture, x_offset + 30, y_offset + 85);
+        let (dst_x, dst_y) = match self.position {
+            BoxAreaPosition::RightTop => (x_offset + 85, y_offset + 30),
+            BoxAreaPosition::RightBottom => (x_offset + 85, y_offset + 30),
+            BoxAreaPosition::LeftBottom => (x_offset, y_offset + 30),
+            BoxAreaPosition::LeftTop => (x_offset, y_offset + 30),
         };
-        canvas.copy(texture, Rect::new(70, 550, 25, 50), dst);
+        Sprite::BushVertical.render(canvas, texture, dst_x, dst_y);
 
         // Box
-        let box_src = match self.content {
-            BoxAreaContent::Nothing => Rect::new(70, 620, 50, 50),
-            BoxAreaContent::HiddenBox => Rect::new(5, 620, 50, 50),
-            BoxAreaContent::EmptyGlass => Rect::new(35, 510, 20, 25),
-            BoxAreaContent::FilledBottle => Rect::new(5, 550, 20, 50),
-            BoxAreaContent::EmptyBottle => Rect::new(35, 550, 20, 50),
+        let box_sprite = match &self.content {
+            BoxAreaContent::HiddenBox => Sprite::HiddenBox,
+            BoxAreaContent::FilledBottle => Sprite::BottleFilled,
+            BoxAreaContent::EmptyBottle => Sprite::BottleEmpty,
+            BoxAreaContent::EmptyGlass => Sprite::GlassEmpty,
+            BoxAreaContent::Nothing => Sprite::Nothing,
         };
-        let (box_width, box_height) = match self.content {
-            BoxAreaContent::Nothing => (50, 50),
-            BoxAreaContent::HiddenBox => (50, 50),
-            BoxAreaContent::EmptyGlass => (20, 25),
-            BoxAreaContent::FilledBottle => (20, 50),
-            BoxAreaContent::EmptyBottle => (20, 50),
-        };
-        canvas.copy(
+        let (box_width, box_height) = box_sprite.size();
+        box_sprite.render(
+            canvas,
             texture,
-            box_src,
-            Rect::new(
-                x_offset + 30 + (50 - box_width) / 2,
-                y_offset + 30 + (50 - box_height) / 2,
-                box_width as u32,
-                box_height as u32,
-            ),
+            x_offset + 30 + (50 - box_width as i32) / 2,
+            y_offset + 30 + (50 - box_height as i32) / 2,
         );
     }
 }
