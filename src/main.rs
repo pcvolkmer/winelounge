@@ -3,15 +3,12 @@ mod world;
 
 use std::time::Duration;
 
-use crate::player::player::Player;
-use crate::world::world::{BoxAreaContent, BoxAreaPosition, World};
+use crate::player::Player;
+use crate::world::{BoxAreaContent, BoxAreaPosition, World};
 use sdl2::event::Event;
 use sdl2::image::LoadTexture;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
-use sdl2::rect::{Point, Rect};
-use sdl2::render::{Texture, WindowCanvas};
-use sdl2::ttf::Font;
 
 const GLASS_SPACE: u8 = 5;
 
@@ -94,29 +91,26 @@ fn main() {
             None => Option::None,
         };
 
-        match colliding_box_area {
-            Some(ba) => {
-                let content = match &ba.content {
-                    BoxAreaContent::HiddenBox => BoxAreaContent::random(),
-                    BoxAreaContent::EmptyGlass => BoxAreaContent::EmptyGlass,
-                    BoxAreaContent::FilledBottle => BoxAreaContent::FilledBottle,
-                    _ => BoxAreaContent::Nothing,
-                };
+        if let Some(ba) = colliding_box_area {
+            let content = match &ba.content {
+                BoxAreaContent::HiddenBox => BoxAreaContent::random(),
+                BoxAreaContent::EmptyGlass => BoxAreaContent::EmptyGlass,
+                BoxAreaContent::FilledBottle => BoxAreaContent::FilledBottle,
+                _ => BoxAreaContent::Nothing,
+            };
 
-                if content == BoxAreaContent::EmptyGlass && world.player.can_pick_glass() {
-                    ba.update_content(BoxAreaContent::Nothing);
-                    world.player.pick_glass();
-                } else if content == BoxAreaContent::EmptyGlass && !world.player.can_pick_glass() {
-                    ba.update_content(BoxAreaContent::EmptyGlass);
-                } else if content == BoxAreaContent::FilledBottle && world.player.can_fill_glass() {
-                    ba.update_content(BoxAreaContent::EmptyBottle);
-                    world.player.fill_glass();
-                } else if content == BoxAreaContent::FilledBottle && !world.player.can_fill_glass()
-                {
-                    ba.update_content(BoxAreaContent::FilledBottle);
-                }
+            if content == BoxAreaContent::EmptyGlass && world.player.can_pick_glass() {
+                ba.update_content(BoxAreaContent::Nothing);
+                world.player.pick_glass();
+            } else if content == BoxAreaContent::EmptyGlass && !world.player.can_pick_glass() {
+                ba.update_content(BoxAreaContent::EmptyGlass);
+            } else if content == BoxAreaContent::FilledBottle && world.player.can_fill_glass() {
+                ba.update_content(BoxAreaContent::EmptyBottle);
+                world.player.fill_glass();
+            } else if content == BoxAreaContent::FilledBottle && !world.player.can_fill_glass()
+            {
+                ba.update_content(BoxAreaContent::FilledBottle);
             }
-            None => {}
         }
 
         if chrono::Utc::now().timestamp_millis() % 1000 > 950 {
