@@ -4,7 +4,7 @@ use sdl2::rect::{Point, Rect};
 use sdl2::render::{Texture, WindowCanvas};
 
 pub struct Player {
-    pub position: Point,
+    position: Point,
     direction: PlayerDirection,
     footstep: u8,
     pub empty_glasses: u8,
@@ -60,33 +60,28 @@ impl Player {
     }
 
     pub fn center(&self) -> Point {
-        Point::new(self.position.x() + 19, self.position.y() + 56)
+        self.bounding_rect().center()
     }
 
     pub fn bounding_rect(&self) -> Rect {
-        Rect::new(self.position.x(), self.position.y(), 40, 115)
+        Rect::new(
+            self.position.x(),
+            self.position.y(),
+            self.sprite().rect().width(),
+            self.sprite().rect().height(),
+        )
+    }
+
+    pub fn within_rect(&self, rect: &Rect) -> bool {
+        self.position.y > rect.y()
+            && self.position.y < rect.y() + (rect.height() - self.bounding_rect().height()) as i32
+            && self.position.x > rect.x()
+            && self.position.x < (rect.width() - self.bounding_rect().width()) as i32
     }
 
     pub fn render(&self, canvas: &mut WindowCanvas, texture: &Texture) {
-        let direction = match self.direction {
-            PlayerDirection::Down => sprite::PlayerDirection::Down,
-            PlayerDirection::Left => sprite::PlayerDirection::Left,
-            PlayerDirection::Right => sprite::PlayerDirection::Right,
-            PlayerDirection::Up => sprite::PlayerDirection::Up,
-        };
-
-        let footstep = match self.footstep {
-            1 => sprite::PlayerFootstep::Left,
-            2 => sprite::PlayerFootstep::Right,
-            _ => sprite::PlayerFootstep::None,
-        };
-
-        Sprite::Player(direction, footstep).render(
-            canvas,
-            texture,
-            self.position.x(),
-            self.position.y(),
-        );
+        self.sprite()
+            .render(canvas, texture, self.position.x(), self.position.y());
     }
 
     pub fn face_up(&mut self) {
@@ -131,5 +126,22 @@ impl Player {
 
     pub fn stop(&mut self) {
         self.footstep = 0;
+    }
+
+    fn sprite(&self) -> Sprite {
+        let direction = match self.direction {
+            PlayerDirection::Down => sprite::PlayerDirection::Down,
+            PlayerDirection::Left => sprite::PlayerDirection::Left,
+            PlayerDirection::Right => sprite::PlayerDirection::Right,
+            PlayerDirection::Up => sprite::PlayerDirection::Up,
+        };
+
+        let footstep = match self.footstep {
+            1 => sprite::PlayerFootstep::Left,
+            2 => sprite::PlayerFootstep::Right,
+            _ => sprite::PlayerFootstep::None,
+        };
+
+        Sprite::Player(direction, footstep)
     }
 }

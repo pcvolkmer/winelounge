@@ -38,6 +38,10 @@ impl World {
         }
     }
 
+    pub fn playable_rect() -> Rect {
+        Rect::new(0, 50, 800, 550)
+    }
+
     pub fn collides_with_box_area(&mut self) -> Option<BoxAreaPosition> {
         if self.right_top_box_area.collides_with(&self.player) {
             return Some(BoxAreaPosition::RightTop);
@@ -69,42 +73,34 @@ impl World {
     }
 
     pub fn move_up(&mut self) {
-        if self.player.position.y > 50 {
-            self.player.move_up();
-            if self.collides_with_stop() {
-                self.player.move_down();
-                self.player.face_up();
-            }
+        self.player.move_up();
+        if self.collides_with_stop() || !self.player.within_rect(&Self::playable_rect()) {
+            self.player.move_down();
+            self.player.face_up();
         }
     }
 
     pub fn move_down(&mut self) {
-        if self.player.position.y < 600 - 110 {
-            self.player.move_down();
-            if self.collides_with_stop() {
-                self.player.move_up();
-                self.player.face_down();
-            }
+        self.player.move_down();
+        if self.collides_with_stop() || !self.player.within_rect(&Self::playable_rect()) {
+            self.player.move_up();
+            self.player.face_down();
         }
     }
 
     pub fn move_left(&mut self) {
-        if self.player.position.x > 0 {
-            self.player.move_left();
-            if self.collides_with_stop() {
-                self.player.move_right();
-                self.player.face_left();
-            }
+        self.player.move_left();
+        if self.collides_with_stop() || !self.player.within_rect(&Self::playable_rect()) {
+            self.player.move_right();
+            self.player.face_left();
         }
     }
 
     pub fn move_right(&mut self) {
-        if self.player.position.x < 800 - 40 {
-            self.player.move_right();
-            if self.collides_with_stop() {
-                self.player.move_left();
-                self.player.face_right();
-            }
+        self.player.move_right();
+        if self.collides_with_stop() || !self.player.within_rect(&Self::playable_rect()) {
+            self.player.move_left();
+            self.player.face_right();
         }
     }
 
@@ -137,14 +133,14 @@ impl World {
         canvas.clear();
 
         canvas.set_draw_color(Color::RGB(160, 90, 44));
-        canvas.fill_rect(Rect::new(0, 0, 800, 45));
+        let _r = canvas.fill_rect(Rect::new(0, 0, 800, 45));
 
         canvas.set_draw_color(Color::RGB(206, 182, 115));
 
         // Points/Glasses
         (1..=GLASS_SPACE).for_each(|i| {
             canvas.set_draw_color(Color::RGB(128, 51, 0));
-            canvas.fill_rect(Rect::new(5, 37, GLASS_SPACE as u32 * 25 + 5, 4));
+            let _r = canvas.fill_rect(Rect::new(5, 37, GLASS_SPACE as u32 * 25 + 5, 4));
 
             if self.player.filled_glasses + self.player.empty_glasses >= i {
                 Sprite::GlassEmpty.render(canvas, texture, (i as i32) * 25 - 15, 10);
@@ -187,10 +183,10 @@ impl World {
         let t2 = canvas.texture_creator();
         let t2 = t2.create_texture_from_surface(&x).unwrap();
 
-        canvas.copy(
+        let _r = canvas.copy(
             &t2,
             x.rect(),
-            Some(Rect::new(790 - x.width() as i32, 8, x.width(), x.height())),
+            Some(Rect::new(790 - x.width() as i32, 16, x.width(), x.height())),
         );
         canvas.set_draw_color(Color::RGB(206, 182, 115));
 
@@ -234,29 +230,6 @@ impl BoxArea {
         };
 
         Rect::new(x_offset, y_offset, 110, 110)
-    }
-
-    fn enter_rect(&self) -> Rect {
-        match self.position {
-            BoxAreaPosition::RightTop => {
-                Rect::new(self.bounding_rect().x(), self.bounding_rect().y(), 25, 110)
-            }
-            BoxAreaPosition::RightBottom => {
-                Rect::new(self.bounding_rect().x(), self.bounding_rect().y(), 25, 110)
-            }
-            BoxAreaPosition::LeftBottom => Rect::new(
-                self.bounding_rect().x() + 85,
-                self.bounding_rect().y(),
-                25,
-                110,
-            ),
-            BoxAreaPosition::LeftTop => Rect::new(
-                self.bounding_rect().x() + 85,
-                self.bounding_rect().y(),
-                25,
-                110,
-            ),
-        }
     }
 
     fn collides_with(&self, player: &Player) -> bool {
