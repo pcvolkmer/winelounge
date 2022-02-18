@@ -2,7 +2,7 @@
 
 This simple retro game is my first attempt at creating a small game.
 
-Since it was written within one day, the code is more of a quick hack than proper software.
+Since it was originally written within one day, the code is more of a quick hack than proper software.
 But this game may evolve ... ;)
 
 == Gameplay

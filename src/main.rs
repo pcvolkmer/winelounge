@@ -33,7 +33,7 @@ fn main() {
     let texture = texture_creator.load_texture("./assets/sprite.png").unwrap();
 
     let font = sdl2::ttf::init().unwrap();
-    let font = font.load_font("./assets/font.ttf", 20).unwrap();
+    let font = font.load_font("./assets/Retro.ttf", 16).unwrap();
 
     let mut event_pump = sdl_context.event_pump().unwrap();
 
