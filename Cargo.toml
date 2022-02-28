@@ -12,3 +12,9 @@ rand = "0.8"
 [dependencies.sdl2]
 version = "0.35"
 features = ["image", "ttf"]
+
+[profile.release]
+opt-level = "s"
+codegen-units = 1
+lto = "thin"
+strip = "debuginfo"
