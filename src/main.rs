@@ -5,7 +5,7 @@ mod world;
 use std::time::Duration;
 
 use crate::player::Player;
-use crate::world::{BoxAreaContent, BoxAreaPosition, World};
+use crate::world::{BoxAreaContent, BoxAreaPosition, Collision, World};
 use sdl2::event::Event;
 use sdl2::image::LoadTexture;
 use sdl2::keyboard::Keycode;
@@ -80,44 +80,51 @@ fn main() {
             }
         }
 
-        if world.collides_with_lounge() && world.player.can_drink_glass() {
-            world.player.drink_glass()
-        }
-
-        let colliding_box_area = match world.collides_with_box_area() {
-            Some(BoxAreaPosition::RightTop) => Option::Some(&mut world.right_top_box_area),
-            Some(BoxAreaPosition::RightBottom) => Option::Some(&mut world.right_bottom_box_area),
-            Some(BoxAreaPosition::LeftBottom) => Option::Some(&mut world.left_bottom_box_area),
-            Some(BoxAreaPosition::LeftTop) => Option::Some(&mut world.left_top_box_area),
-            None => Option::None,
-        };
-
-        if let Some(ba) = colliding_box_area {
-            let content = match &ba.content {
-                BoxAreaContent::HiddenBox => BoxAreaContent::random(),
-                BoxAreaContent::EmptyGlass => BoxAreaContent::EmptyGlass,
-                BoxAreaContent::FilledBottle => BoxAreaContent::FilledBottle,
-                _ => BoxAreaContent::Nothing,
-            };
-
-            if content == BoxAreaContent::EmptyGlass && world.player.can_pick_glass() {
-                ba.update_content(BoxAreaContent::Nothing);
-                world.player.pick_glass();
-            } else if content == BoxAreaContent::EmptyGlass && !world.player.can_pick_glass() {
-                ba.update_content(BoxAreaContent::EmptyGlass);
-            } else if content == BoxAreaContent::FilledBottle && world.player.can_fill_glass() {
-                ba.update_content(BoxAreaContent::EmptyBottle);
-                world.player.fill_glass();
-            } else if content == BoxAreaContent::FilledBottle && !world.player.can_fill_glass() {
-                ba.update_content(BoxAreaContent::FilledBottle);
-            }
-        }
+        handle_lounge_collisions(&mut world);
+        handle_boxarea_collisions(&mut world);
 
         if chrono::Utc::now().timestamp_millis() % 1000 > 950 {
             world.update_box_areas();
         }
+
         world.render(&mut canvas, &texture, &font);
 
         ::std::thread::sleep(Duration::from_millis(25));
+    }
+}
+
+fn handle_lounge_collisions(world: &mut World) {
+    if Collision::Lounge == world.has_player_collision() && world.player.can_drink_glass() {
+        world.player.drink_glass()
+    }
+}
+
+fn handle_boxarea_collisions(world: &mut World) {
+    if let Collision::BoxArea(bap) = world.has_player_collision() {
+        let ba = match bap {
+            BoxAreaPosition::RightTop => &mut world.right_top_box_area,
+            BoxAreaPosition::RightBottom => &mut world.right_bottom_box_area,
+            BoxAreaPosition::LeftBottom => &mut world.left_bottom_box_area,
+            BoxAreaPosition::LeftTop => &mut world.left_top_box_area,
+        };
+
+        let content = match &ba.content {
+            BoxAreaContent::HiddenBox => BoxAreaContent::random(),
+            BoxAreaContent::EmptyGlass => BoxAreaContent::EmptyGlass,
+            BoxAreaContent::FilledBottle => BoxAreaContent::FilledBottle,
+            _ => BoxAreaContent::Nothing,
+        };
+
+        if content == BoxAreaContent::EmptyGlass && world.player.can_pick_glass() {
+            ba.update_content(BoxAreaContent::Nothing);
+            world.player.pick_glass();
+        } else if content == BoxAreaContent::EmptyGlass && !world.player.can_pick_glass() {
+            ba.update_content(BoxAreaContent::EmptyGlass);
+        } else if content == BoxAreaContent::FilledBottle && world.player.can_fill_glass() {
+            ba.update_content(BoxAreaContent::EmptyBottle);
+            world.player.fill_glass();
+        } else if content == BoxAreaContent::FilledBottle && !world.player.can_fill_glass() {
+            ba.update_content(BoxAreaContent::FilledBottle);
+        }
     }
 }

@@ -42,34 +42,16 @@ impl World {
         Rect::new(0, 50, 800, 550)
     }
 
-    pub fn collides_with_box_area(&mut self) -> Option<BoxAreaPosition> {
-        if self.right_top_box_area.collides_with(&self.player) {
-            return Some(BoxAreaPosition::RightTop);
-        } else if self.right_bottom_box_area.collides_with(&self.player) {
-            return Some(BoxAreaPosition::RightBottom);
-        } else if self.left_bottom_box_area.collides_with(&self.player) {
-            return Some(BoxAreaPosition::LeftBottom);
-        } else if self.left_top_box_area.collides_with(&self.player) {
-            return Some(BoxAreaPosition::LeftTop);
+    pub fn has_player_collision(&mut self) -> Collision {
+        if let Some(ba) = self.collides_with_box_area() {
+            return Collision::BoxArea(ba);
+        } else if self.collides_with_lounge() {
+            return Collision::Lounge;
+        } else if self.collides_with_stop() {
+            return Collision::Stopper;
         }
 
-        None
-    }
-
-    pub fn collides_with_lounge(&mut self) -> bool {
-        let lounge_rect = Rect::new(325, 260, 150, 95);
-        lounge_rect.contains_point(self.player.center())
-    }
-
-    fn collides_with_stop(&mut self) -> bool {
-        for s in &self.stops {
-            let x = s.x() + 12;
-            let y = s.y() + 12;
-            if self.player.bounding_rect().contains_point(Point::new(x, y)) {
-                return true;
-            }
-        }
-        false
+        Collision::None
     }
 
     pub fn move_up(&mut self) {
@@ -192,6 +174,44 @@ impl World {
 
         canvas.present();
     }
+
+    fn collides_with_box_area(&mut self) -> Option<BoxAreaPosition> {
+        if self.right_top_box_area.collides_with(&self.player) {
+            return Some(BoxAreaPosition::RightTop);
+        } else if self.right_bottom_box_area.collides_with(&self.player) {
+            return Some(BoxAreaPosition::RightBottom);
+        } else if self.left_bottom_box_area.collides_with(&self.player) {
+            return Some(BoxAreaPosition::LeftBottom);
+        } else if self.left_top_box_area.collides_with(&self.player) {
+            return Some(BoxAreaPosition::LeftTop);
+        }
+
+        None
+    }
+
+    fn collides_with_lounge(&mut self) -> bool {
+        let lounge_rect = Rect::new(325, 260, 150, 95);
+        lounge_rect.contains_point(self.player.center())
+    }
+
+    fn collides_with_stop(&mut self) -> bool {
+        for s in &self.stops {
+            let x = s.x() + 12;
+            let y = s.y() + 12;
+            if self.player.bounding_rect().contains_point(Point::new(x, y)) {
+                return true;
+            }
+        }
+        false
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum Collision {
+    BoxArea(BoxAreaPosition),
+    Lounge,
+    Stopper,
+    None,
 }
 
 #[derive(Debug)]
@@ -269,7 +289,7 @@ impl BoxArea {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum BoxAreaPosition {
     RightTop,
     RightBottom,
