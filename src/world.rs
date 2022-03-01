@@ -6,11 +6,11 @@ use sdl2::render::{Texture, WindowCanvas};
 use sdl2::ttf::Font;
 
 pub struct World {
-    pub player: Player,
-    pub right_top_box_area: BoxArea,
-    pub right_bottom_box_area: BoxArea,
-    pub left_bottom_box_area: BoxArea,
-    pub left_top_box_area: BoxArea,
+    player: Player,
+    right_top_box_area: BoxArea,
+    right_bottom_box_area: BoxArea,
+    left_bottom_box_area: BoxArea,
+    left_top_box_area: BoxArea,
     stops: Vec<Point>,
 }
 
@@ -42,7 +42,7 @@ impl World {
         Rect::new(0, 50, 800, 550)
     }
 
-    pub fn has_player_collision(&mut self) -> Collision {
+    fn has_player_collision(&mut self) -> Collision {
         if let Some(ba) = self.collides_with_box_area() {
             return Collision::BoxArea(ba);
         } else if self.collides_with_lounge() {
@@ -109,6 +109,11 @@ impl World {
             box_area.content = BoxAreaContent::Nothing;
             box_area.last_update = now;
         }
+    }
+
+    pub fn handle_collisions(&mut self) {
+        self.handle_lounge_collisions();
+        self.handle_boxarea_collisions();
     }
 
     pub fn render(&self, canvas: &mut WindowCanvas, texture: &Texture, font: &Font) {
@@ -204,10 +209,46 @@ impl World {
         }
         false
     }
+
+    fn handle_lounge_collisions(&mut self) {
+        if Collision::Lounge == self.has_player_collision() && self.player.can_drink_glass() {
+            self.player.drink_glass()
+        }
+    }
+
+    fn handle_boxarea_collisions(&mut self) {
+        if let Collision::BoxArea(bap) = self.has_player_collision() {
+            let ba = match bap {
+                BoxAreaPosition::RightTop => &mut self.right_top_box_area,
+                BoxAreaPosition::RightBottom => &mut self.right_bottom_box_area,
+                BoxAreaPosition::LeftBottom => &mut self.left_bottom_box_area,
+                BoxAreaPosition::LeftTop => &mut self.left_top_box_area,
+            };
+
+            let content = match &ba.content {
+                BoxAreaContent::HiddenBox => BoxAreaContent::random(),
+                BoxAreaContent::EmptyGlass => BoxAreaContent::EmptyGlass,
+                BoxAreaContent::FilledBottle => BoxAreaContent::FilledBottle,
+                _ => BoxAreaContent::Nothing,
+            };
+
+            if content == BoxAreaContent::EmptyGlass && self.player.can_pick_glass() {
+                ba.update_content(BoxAreaContent::Nothing);
+                self.player.pick_glass();
+            } else if content == BoxAreaContent::EmptyGlass && !self.player.can_pick_glass() {
+                ba.update_content(BoxAreaContent::EmptyGlass);
+            } else if content == BoxAreaContent::FilledBottle && self.player.can_fill_glass() {
+                ba.update_content(BoxAreaContent::EmptyBottle);
+                self.player.fill_glass();
+            } else if content == BoxAreaContent::FilledBottle && !self.player.can_fill_glass() {
+                ba.update_content(BoxAreaContent::FilledBottle);
+            }
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub enum Collision {
+enum Collision {
     BoxArea(BoxAreaPosition),
     Lounge,
     Stopper,
@@ -215,7 +256,7 @@ pub enum Collision {
 }
 
 #[derive(Debug)]
-pub struct BoxArea {
+struct BoxArea {
     position: BoxAreaPosition,
     pub content: BoxAreaContent,
     last_update: i64,
@@ -230,7 +271,7 @@ impl BoxArea {
         }
     }
 
-    pub fn update_content(&mut self, content: BoxAreaContent) {
+    fn update_content(&mut self, content: BoxAreaContent) {
         self.content = content;
         self.last_update = chrono::Utc::now().timestamp();
     }
@@ -307,7 +348,7 @@ pub enum BoxAreaContent {
 }
 
 impl BoxAreaContent {
-    pub fn random() -> BoxAreaContent {
+    fn random() -> BoxAreaContent {
         match rand::random::<i32>() % 5 {
             1 | 4 => BoxAreaContent::EmptyGlass,
             2 | 3 => BoxAreaContent::FilledBottle,
