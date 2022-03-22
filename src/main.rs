@@ -1,15 +1,16 @@
-mod player;
-mod sprite;
-mod world;
-
 use std::time::Duration;
 
-use crate::player::Player;
-use crate::world::World;
 use sdl2::event::Event;
 use sdl2::image::LoadTexture;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
+
+use crate::player::Player;
+use crate::world::World;
+
+mod player;
+mod sprite;
+mod world;
 
 const GLASS_SPACE: u8 = 5;
 
@@ -49,34 +50,7 @@ fn main() {
                 } => {
                     break 'running;
                 }
-                Event::KeyDown {
-                    keycode: Some(Keycode::Up) | Some(Keycode::W),
-                    ..
-                } => {
-                    world.move_up();
-                }
-                Event::KeyDown {
-                    keycode: Some(Keycode::Down) | Some(Keycode::S),
-                    ..
-                } => {
-                    world.move_down();
-                }
-                Event::KeyDown {
-                    keycode: Some(Keycode::Left) | Some(Keycode::A),
-                    ..
-                } => {
-                    world.move_left();
-                }
-                Event::KeyDown {
-                    keycode: Some(Keycode::Right) | Some(Keycode::D),
-                    ..
-                } => {
-                    world.move_right();
-                }
-                Event::KeyUp { .. } => {
-                    world.stop_player();
-                }
-                _ => {}
+                e => world.handle_event(e),
             }
         }
 

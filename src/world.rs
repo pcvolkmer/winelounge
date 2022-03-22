@@ -1,9 +1,12 @@
-use crate::sprite::Sprite;
-use crate::{Player, GLASS_SPACE};
+use sdl2::event::Event;
+use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::rect::{Point, Rect};
 use sdl2::render::{Texture, WindowCanvas};
 use sdl2::ttf::Font;
+
+use crate::sprite::Sprite;
+use crate::{Player, GLASS_SPACE};
 
 pub struct World {
     player: Player,
@@ -42,16 +45,37 @@ impl World {
         Rect::new(0, 50, 800, 550)
     }
 
-    fn has_player_collision(&mut self) -> Collision {
-        if let Some(ba) = self.collides_with_box_area() {
-            return Collision::BoxArea(ba);
-        } else if self.collides_with_lounge() {
-            return Collision::Lounge;
-        } else if self.collides_with_stop() {
-            return Collision::Stopper;
+    pub fn handle_event(&mut self, event: Event) {
+        match event {
+            Event::KeyDown {
+                keycode: Some(Keycode::Up) | Some(Keycode::W),
+                ..
+            } => {
+                self.move_up();
+            }
+            Event::KeyDown {
+                keycode: Some(Keycode::Down) | Some(Keycode::S),
+                ..
+            } => {
+                self.move_down();
+            }
+            Event::KeyDown {
+                keycode: Some(Keycode::Left) | Some(Keycode::A),
+                ..
+            } => {
+                self.move_left();
+            }
+            Event::KeyDown {
+                keycode: Some(Keycode::Right) | Some(Keycode::D),
+                ..
+            } => {
+                self.move_right();
+            }
+            Event::KeyUp { .. } => {
+                self.stop_player();
+            }
+            _ => {}
         }
-
-        Collision::None
     }
 
     pub fn move_up(&mut self) {
@@ -95,20 +119,6 @@ impl World {
         World::update_box_area(&mut self.right_bottom_box_area);
         World::update_box_area(&mut self.left_bottom_box_area);
         World::update_box_area(&mut self.left_top_box_area);
-    }
-
-    fn update_box_area(box_area: &mut BoxArea) {
-        let now = chrono::Utc::now().timestamp();
-        let r: i64 = (rand::random::<i64>() % 10) + 3;
-
-        if box_area.content == BoxAreaContent::Nothing && box_area.last_update + 10 < now {
-            box_area.content = BoxAreaContent::HiddenBox;
-            box_area.last_update = now;
-        } else if box_area.content != BoxAreaContent::Nothing && box_area.last_update + 30 < now - r
-        {
-            box_area.content = BoxAreaContent::Nothing;
-            box_area.last_update = now;
-        }
     }
 
     pub fn handle_collisions(&mut self) {
@@ -178,6 +188,32 @@ impl World {
         canvas.set_draw_color(Color::RGB(206, 182, 115));
 
         canvas.present();
+    }
+
+    fn update_box_area(box_area: &mut BoxArea) {
+        let now = chrono::Utc::now().timestamp();
+        let r: i64 = (rand::random::<i64>() % 10) + 3;
+
+        if box_area.content == BoxAreaContent::Nothing && box_area.last_update + 10 < now {
+            box_area.content = BoxAreaContent::HiddenBox;
+            box_area.last_update = now;
+        } else if box_area.content != BoxAreaContent::Nothing && box_area.last_update + 30 < now - r
+        {
+            box_area.content = BoxAreaContent::Nothing;
+            box_area.last_update = now;
+        }
+    }
+
+    fn has_player_collision(&mut self) -> Collision {
+        if let Some(ba) = self.collides_with_box_area() {
+            return Collision::BoxArea(ba);
+        } else if self.collides_with_lounge() {
+            return Collision::Lounge;
+        } else if self.collides_with_stop() {
+            return Collision::Stopper;
+        }
+
+        Collision::None
     }
 
     fn collides_with_box_area(&mut self) -> Option<BoxAreaPosition> {
