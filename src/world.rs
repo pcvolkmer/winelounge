@@ -17,7 +17,9 @@ pub struct World {
     stops: Vec<Point>,
 }
 
+/// The world, the player and any item exists within
 impl World {
+    /// Creates and initializes new playable world.
     pub fn init() -> World {
         World {
             player: Player::init(),
@@ -45,75 +47,58 @@ impl World {
         Rect::new(0, 50, 800, 550)
     }
 
+    /// Handles key events for player move.
+    ///
+    /// This checks if player collides with any stop item or will move out of world.
+    /// If player can move, move him and turn him to the correct side.
     pub fn handle_event(&mut self, event: Event) {
         match event {
             Event::KeyDown {
                 keycode: Some(Keycode::Up) | Some(Keycode::W),
                 ..
             } => {
-                self.move_up();
+                self.player.move_up();
+                if self.collides_with_stop() || !self.player.within_rect(&Self::playable_rect()) {
+                    self.player.move_down();
+                    self.player.face_up();
+                }
             }
             Event::KeyDown {
                 keycode: Some(Keycode::Down) | Some(Keycode::S),
                 ..
             } => {
-                self.move_down();
+                self.player.move_down();
+                if self.collides_with_stop() || !self.player.within_rect(&Self::playable_rect()) {
+                    self.player.move_up();
+                    self.player.face_down();
+                }
             }
             Event::KeyDown {
                 keycode: Some(Keycode::Left) | Some(Keycode::A),
                 ..
             } => {
-                self.move_left();
+                self.player.move_left();
+                if self.collides_with_stop() || !self.player.within_rect(&Self::playable_rect()) {
+                    self.player.move_right();
+                    self.player.face_left();
+                }
             }
             Event::KeyDown {
                 keycode: Some(Keycode::Right) | Some(Keycode::D),
                 ..
             } => {
-                self.move_right();
+                self.player.move_right();
+                if self.collides_with_stop() || !self.player.within_rect(&Self::playable_rect()) {
+                    self.player.move_left();
+                    self.player.face_right();
+                }
             }
-            Event::KeyUp { .. } => {
-                self.stop_player();
-            }
+            Event::KeyUp { .. } => self.player.stop(),
             _ => {}
         }
     }
 
-    pub fn move_up(&mut self) {
-        self.player.move_up();
-        if self.collides_with_stop() || !self.player.within_rect(&Self::playable_rect()) {
-            self.player.move_down();
-            self.player.face_up();
-        }
-    }
-
-    pub fn move_down(&mut self) {
-        self.player.move_down();
-        if self.collides_with_stop() || !self.player.within_rect(&Self::playable_rect()) {
-            self.player.move_up();
-            self.player.face_down();
-        }
-    }
-
-    pub fn move_left(&mut self) {
-        self.player.move_left();
-        if self.collides_with_stop() || !self.player.within_rect(&Self::playable_rect()) {
-            self.player.move_right();
-            self.player.face_left();
-        }
-    }
-
-    pub fn move_right(&mut self) {
-        self.player.move_right();
-        if self.collides_with_stop() || !self.player.within_rect(&Self::playable_rect()) {
-            self.player.move_left();
-            self.player.face_right();
-        }
-    }
-
-    pub fn stop_player(&mut self) {
-        self.player.stop()
-    }
-
+    /// Updates box areas to provide new boxes and remove items after some time
     pub fn update_box_areas(&mut self) {
         World::update_box_area(&mut self.right_top_box_area);
         World::update_box_area(&mut self.right_bottom_box_area);
@@ -121,11 +106,13 @@ impl World {
         World::update_box_area(&mut self.left_top_box_area);
     }
 
+    /// Handles both, collisions with lounge and any box area
     pub fn handle_collisions(&mut self) {
         self.handle_lounge_collisions();
         self.handle_boxarea_collisions();
     }
 
+    /// Renders world using given canvas, texture and font
     pub fn render(&self, canvas: &mut WindowCanvas, texture: &Texture, font: &Font) {
         canvas.clear();
 
@@ -299,6 +286,7 @@ struct BoxArea {
 }
 
 impl BoxArea {
+    /// Creates a new BoxArea
     fn new(position: BoxAreaPosition, content: BoxAreaContent) -> BoxArea {
         BoxArea {
             position,
@@ -329,10 +317,12 @@ impl BoxArea {
         Rect::new(x_offset, y_offset, 110, 110)
     }
 
+    /// Checks if player collides with this BoxSrea
     fn collides_with(&self, player: &Player) -> bool {
         self.bounding_rect().contains_point(player.center())
     }
 
+    /// Renders BoxArea using goven Canvas and Texture
     fn render(&self, canvas: &mut WindowCanvas, texture: &Texture) {
         let x_offset = self.bounding_rect().x();
         let y_offset = self.bounding_rect().y();
@@ -366,6 +356,8 @@ impl BoxArea {
     }
 }
 
+/// Position of a BoxArea.
+/// There are only four possible values for each vertex of the world.
 #[derive(Debug, PartialEq, Eq)]
 pub enum BoxAreaPosition {
     RightTop,
@@ -374,6 +366,7 @@ pub enum BoxAreaPosition {
     LeftTop,
 }
 
+/// Content of a BoxArea
 #[derive(Debug, PartialEq, Eq)]
 pub enum BoxAreaContent {
     Nothing,
@@ -384,6 +377,7 @@ pub enum BoxAreaContent {
 }
 
 impl BoxAreaContent {
+    /// Selects new random BoxAreaContent
     fn random() -> BoxAreaContent {
         match rand::random::<i32>() % 5 {
             1 | 4 => BoxAreaContent::EmptyGlass,

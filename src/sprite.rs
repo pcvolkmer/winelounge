@@ -30,6 +30,7 @@ pub enum PlayerDirection {
 }
 
 impl Sprite {
+    /// Returns bounding rect of current sprite.
     pub fn rect(&self) -> Rect {
         match &self {
             Sprite::BottleEmpty => Rect::new(35, 550, 20, 50),
@@ -47,10 +48,12 @@ impl Sprite {
         }
     }
 
+    /// Returns size of currect sprite
     pub fn size(&self) -> (u32, u32) {
         self.rect().size()
     }
 
+    /// Renders current sprite with given Canvas and texture at the given position,
     pub fn render(&self, canvas: &mut WindowCanvas, texture: &Texture, x: i32, y: i32) {
         let render_rect = Rect::new(x, y, self.rect().width(), self.rect().height());
         let _r = canvas.copy(texture, self.rect(), render_rect);
