@@ -10,6 +10,7 @@ use crate::{Player, GLASS_SPACE};
 
 pub struct World {
     player: Player,
+    remote_player: Option<Player>,
     right_top_box_area: BoxArea,
     right_bottom_box_area: BoxArea,
     left_bottom_box_area: BoxArea,
@@ -23,6 +24,7 @@ impl World {
     pub fn init() -> World {
         World {
             player: Player::init(),
+            remote_player: None,
             right_top_box_area: BoxArea::new(BoxAreaPosition::RightTop, BoxAreaContent::EmptyGlass),
             right_bottom_box_area: BoxArea::new(
                 BoxAreaPosition::RightBottom,
@@ -43,6 +45,14 @@ impl World {
         }
     }
 
+    pub fn spawn_player(&mut self, player_id: String, x: u32, y: u32) {
+        self.remote_player = Some(Player::spawn(player_id.as_str(), x, y));
+    }
+
+    pub fn get_player(&mut self, _: String) -> &mut Player {
+        &mut self.player
+    }
+
     pub fn playable_rect() -> Rect {
         Rect::new(0, 50, 800, 550)
     }
@@ -52,58 +62,120 @@ impl World {
     /// This checks if player collides with any stop item or will move out of world.
     /// If player can move, move him and turn him to the correct side.
     pub fn handle_event(&mut self, event: Event) {
+        let player_id = self.player.id.clone();
         match event {
             Event::KeyDown {
                 keycode: Some(Keycode::Up) | Some(Keycode::W),
                 ..
             } => {
-                self.player.move_up();
+                self.execute_command(Command::MovePlayer(player_id.clone(), Direction::Up));
                 if self.collides_with_stop() || !self.player.within_rect(&Self::playable_rect()) {
-                    self.player.move_down();
-                    self.player.face_up();
+                    self.execute_command(Command::MovePlayer(player_id.clone(), Direction::Down));
+                    self.execute_command(Command::FacePlayer(player_id.clone(), Direction::Up));
                 }
             }
             Event::KeyDown {
                 keycode: Some(Keycode::Down) | Some(Keycode::S),
                 ..
             } => {
-                self.player.move_down();
+                self.execute_command(Command::MovePlayer(player_id.clone(), Direction::Down));
                 if self.collides_with_stop() || !self.player.within_rect(&Self::playable_rect()) {
-                    self.player.move_up();
-                    self.player.face_down();
+                    self.execute_command(Command::MovePlayer(player_id.clone(), Direction::Up));
+                    self.execute_command(Command::FacePlayer(player_id.clone(), Direction::Down));
                 }
             }
             Event::KeyDown {
                 keycode: Some(Keycode::Left) | Some(Keycode::A),
                 ..
             } => {
-                self.player.move_left();
+                self.execute_command(Command::MovePlayer(player_id.clone(), Direction::Left));
                 if self.collides_with_stop() || !self.player.within_rect(&Self::playable_rect()) {
-                    self.player.move_right();
-                    self.player.face_left();
+                    self.execute_command(Command::MovePlayer(player_id.clone(), Direction::Right));
+                    self.execute_command(Command::FacePlayer(player_id.clone(), Direction::Left));
                 }
             }
             Event::KeyDown {
                 keycode: Some(Keycode::Right) | Some(Keycode::D),
                 ..
             } => {
-                self.player.move_right();
+                self.execute_command(Command::MovePlayer(player_id.clone(), Direction::Right));
                 if self.collides_with_stop() || !self.player.within_rect(&Self::playable_rect()) {
-                    self.player.move_left();
-                    self.player.face_right();
+                    self.execute_command(Command::MovePlayer(player_id.clone(), Direction::Left));
+                    self.execute_command(Command::FacePlayer(player_id.clone(), Direction::Right));
                 }
             }
-            Event::KeyUp { .. } => self.player.stop(),
+            Event::KeyUp { .. } => self.execute_command(Command::StopPlayer(player_id.clone())),
             _ => {}
         }
     }
 
+    /// Executes a command for world update.
+    pub fn execute_command(&mut self, command: Command) {
+        println!("{}", command);
+
+        match command {
+            Command::SpawnPlayer(player_id, x, y) => &mut {
+                // TBD
+            },
+            Command::RemovePlayer(player_id) => &mut {
+                // TBD
+            },
+            Command::FacePlayer(player_id, Direction::Down) => {
+                &mut self.get_player(player_id).face_down()
+            },
+            Command::FacePlayer(player_id, Direction::Up) => {
+                &mut self.get_player(player_id).face_up()
+            },
+            Command::FacePlayer(player_id, Direction::Left) => {
+                &mut self.get_player(player_id).face_left()
+            },
+            Command::FacePlayer(player_id, Direction::Right) => {
+                &mut self.get_player(player_id).face_right()
+            },
+            Command::MovePlayer(player_id, Direction::Down) => {
+                &mut self.get_player(player_id).move_down()
+            },
+            Command::MovePlayer(player_id, Direction::Up) => {
+                &mut self.get_player(player_id).move_up()
+            },
+            Command::MovePlayer(player_id, Direction::Left) => {
+                &mut self.get_player(player_id).move_left()
+            },
+            Command::MovePlayer(player_id, Direction::Right) => {
+                &mut self.get_player(player_id).move_right()
+            },
+            Command::StopPlayer(player_id) => {
+                &mut self.get_player(player_id).stop()
+            },
+            Command::UpdateBoxArea(position, content) => &mut {
+                match position {
+                    BoxAreaPosition::RightTop => {
+                        self.right_top_box_area.update_content(content);
+                        self.right_top_box_area.last_update = chrono::Utc::now().timestamp();
+                    }
+                    BoxAreaPosition::RightBottom => {
+                        self.right_bottom_box_area.update_content(content);
+                        self.right_top_box_area.last_update = chrono::Utc::now().timestamp();
+                    }
+                    BoxAreaPosition::LeftBottom => {
+                        self.left_bottom_box_area.update_content(content);
+                        self.right_top_box_area.last_update = chrono::Utc::now().timestamp();
+                    }
+                    BoxAreaPosition::LeftTop => {
+                        self.left_top_box_area.update_content(content);
+                        self.right_top_box_area.last_update = chrono::Utc::now().timestamp();
+                    }
+                };
+            }
+        };
+    }
+
     /// Updates box areas to provide new boxes and remove items after some time
     pub fn update_box_areas(&mut self) {
-        World::update_box_area(&mut self.right_top_box_area);
-        World::update_box_area(&mut self.right_bottom_box_area);
-        World::update_box_area(&mut self.left_bottom_box_area);
-        World::update_box_area(&mut self.left_top_box_area);
+        self.update_box_area(BoxAreaPosition::RightTop);
+        self.update_box_area(BoxAreaPosition::RightBottom);
+        self.update_box_area(BoxAreaPosition::LeftBottom);
+        self.update_box_area(BoxAreaPosition::LeftTop);
     }
 
     /// Handles both, collisions with lounge and any box area
@@ -159,6 +231,11 @@ impl World {
         // Player
         self.player.render(canvas, texture);
 
+        // Remote/other player
+        if let Some(remote_player) = &self.remote_player {
+            remote_player.render(canvas, texture);
+        }
+
         // Points
         let x = font
             .render(format!("Score: {:#04}", self.player.points).as_str())
@@ -177,17 +254,28 @@ impl World {
         canvas.present();
     }
 
-    fn update_box_area(box_area: &mut BoxArea) {
+    fn update_box_area(&mut self, box_area_position: BoxAreaPosition) {
+        let box_area = match box_area_position {
+            BoxAreaPosition::RightTop => &self.right_top_box_area,
+            BoxAreaPosition::RightBottom => &self.right_bottom_box_area,
+            BoxAreaPosition::LeftBottom => &self.left_bottom_box_area,
+            BoxAreaPosition::LeftTop => &self.left_top_box_area,
+        };
+
         let now = chrono::Utc::now().timestamp();
         let r: i64 = (rand::random::<i64>() % 10) + 3;
 
         if box_area.content == BoxAreaContent::Nothing && box_area.last_update + 10 < now {
-            box_area.content = BoxAreaContent::HiddenBox;
-            box_area.last_update = now;
+            self.execute_command(Command::UpdateBoxArea(
+                box_area_position,
+                BoxAreaContent::HiddenBox,
+            ));
         } else if box_area.content != BoxAreaContent::Nothing && box_area.last_update + 30 < now - r
         {
-            box_area.content = BoxAreaContent::Nothing;
-            box_area.last_update = now;
+            self.execute_command(Command::UpdateBoxArea(
+                box_area_position,
+                BoxAreaContent::Nothing,
+            ));
         }
     }
 
@@ -239,6 +327,7 @@ impl World {
         }
     }
 
+    // TODO Commands
     fn handle_boxarea_collisions(&mut self) {
         if let Collision::BoxArea(bap) = self.has_player_collision() {
             let ba = match bap {
@@ -256,18 +345,36 @@ impl World {
             };
 
             if content == BoxAreaContent::EmptyGlass && self.player.can_pick_glass() {
-                ba.update_content(BoxAreaContent::Nothing);
+                self.execute_command(Command::UpdateBoxArea(bap, BoxAreaContent::Nothing));
                 self.player.pick_glass();
             } else if content == BoxAreaContent::EmptyGlass && !self.player.can_pick_glass() {
-                ba.update_content(BoxAreaContent::EmptyGlass);
+                self.execute_command(Command::UpdateBoxArea(bap, BoxAreaContent::EmptyGlass));
             } else if content == BoxAreaContent::FilledBottle && self.player.can_fill_glass() {
-                ba.update_content(BoxAreaContent::EmptyBottle);
+                self.execute_command(Command::UpdateBoxArea(bap, BoxAreaContent::EmptyBottle));
                 self.player.fill_glass();
             } else if content == BoxAreaContent::FilledBottle && !self.player.can_fill_glass() {
-                ba.update_content(BoxAreaContent::FilledBottle);
+                self.execute_command(Command::UpdateBoxArea(bap, BoxAreaContent::FilledBottle));
             }
         }
     }
+}
+
+#[derive(Debug, PartialEq)]
+pub enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum Command {
+    SpawnPlayer(String, u32, u32),
+    RemovePlayer(String),
+    FacePlayer(String, Direction),
+    MovePlayer(String, Direction),
+    StopPlayer(String),
+    UpdateBoxArea(BoxAreaPosition, BoxAreaContent),
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -317,7 +424,7 @@ impl BoxArea {
         Rect::new(x_offset, y_offset, 110, 110)
     }
 
-    /// Checks if player collides with this BoxSrea
+    /// Checks if player collides with this BoxArea
     fn collides_with(&self, player: &Player) -> bool {
         self.bounding_rect().contains_point(player.center())
     }

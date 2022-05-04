@@ -1,3 +1,4 @@
+use rand::random;
 use crate::sprite::Sprite;
 use crate::{sprite, GLASS_SPACE};
 use sdl2::rect::{Point, Rect};
@@ -5,6 +6,7 @@ use sdl2::render::{Texture, WindowCanvas};
 
 /// The player with his position, direction ...
 pub struct Player {
+    pub id: String,
     position: Point,
     direction: PlayerDirection,
     footstep: u8,
@@ -24,8 +26,13 @@ enum PlayerDirection {
 impl Player {
     /// Initializes Player with fixed position and direction.
     pub fn init() -> Player {
+        Self::spawn(random::<u32>().to_string().as_str(), 380, 250)
+    }
+
+    pub fn spawn(player_id: &str, x: u32, y: u32) -> Player {
         Player {
-            position: Point::new(380, 250),
+            id: player_id.to_string(),
+            position: Point::new(x as i32, y as i32),
             direction: PlayerDirection::Down,
             footstep: 0,
             empty_glasses: 0,

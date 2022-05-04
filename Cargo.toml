@@ -3,7 +3,7 @@ name = "winelounge"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+autobins = true
 
 [dependencies]
 chrono = "0.4"
@@ -12,6 +12,11 @@ rand = "0.8"
 [dependencies.sdl2]
 version = "0.35"
 features = ["image", "ttf"]
+
+[dependencies.tokio]
+version = "1.18"
+features = ["full"]
+default-features = false
 
 [profile.release]
 opt-level = "s"

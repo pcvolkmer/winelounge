@@ -11,6 +11,7 @@ use crate::world::World;
 mod player;
 mod sprite;
 mod world;
+mod net;
 
 const GLASS_SPACE: u8 = 5;
 
@@ -39,6 +40,8 @@ fn main() {
     let mut event_pump = sdl_context.event_pump().unwrap();
 
     let mut world = World::init();
+
+    world.spawn_player("Test".to_string(), 100, 100);
 
     'running: loop {
         for event in event_pump.poll_iter() {
