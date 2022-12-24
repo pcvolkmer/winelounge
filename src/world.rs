@@ -45,10 +45,6 @@ impl World {
         }
     }
 
-    pub fn spawn_player(&mut self, player_id: String, x: u32, y: u32) {
-        self.remote_player = Some(Player::spawn(player_id.as_str(), x, y));
-    }
-
     pub fn get_player(&mut self, _: String) -> &mut Player {
         &mut self.player
     }
@@ -230,11 +226,6 @@ impl World {
 
         // Player
         self.player.render(canvas, texture);
-
-        // Remote/other player
-        if let Some(remote_player) = &self.remote_player {
-            remote_player.render(canvas, texture);
-        }
 
         // Points
         let x = font

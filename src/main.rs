@@ -41,8 +41,6 @@ fn main() {
 
     let mut world = World::init();
 
-    world.spawn_player("Test".to_string(), 100, 100);
-
     'running: loop {
         for event in event_pump.poll_iter() {
             match event {
