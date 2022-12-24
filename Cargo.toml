@@ -9,15 +9,8 @@ default-run = "winelounge"
 [dependencies]
 chrono = "0.4"
 rand = "0.8"
-
-[dependencies.sdl2]
-version = "0.35"
-features = ["image", "ttf"]
-
-[dependencies.tokio]
-version = "1.18"
-features = ["full"]
-default-features = false
+sdl2 = { version = "0.35", features = ["image", "ttf"] }
+tokio = { version = "1.19", features = ["full"], default-features = false }
 
 [profile.release]
 opt-level = "s"
