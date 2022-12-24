@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 autobins = true
+default-run = "winelounge"
 
 [dependencies]
 chrono = "0.4"
