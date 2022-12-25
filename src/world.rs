@@ -1,3 +1,4 @@
+use log::debug;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
@@ -107,7 +108,7 @@ impl World {
 
     /// Executes a command for world update.
     pub fn execute_command(&mut self, command: Command) {
-        println!("{}", command);
+        debug!("{}", command);
 
         match command {
             Command::SpawnPlayer(player_id, x, y) => &mut {

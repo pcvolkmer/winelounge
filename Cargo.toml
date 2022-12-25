@@ -8,8 +8,10 @@ default-run = "winelounge"
 
 [dependencies]
 chrono = "0.4"
+log = { version = "0.4", features = ["max_level_debug", "release_max_level_warn"] }
 rand = "0.8"
 sdl2 = { version = "0.35", features = ["image", "ttf"] }
+simple_logger = { version = "4", features = ["colors", "timestamps"], default-features = false }
 tokio = { version = "1.19", features = ["full"], default-features = false }
 
 [profile.release]

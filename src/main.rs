@@ -16,6 +16,8 @@ mod net;
 const GLASS_SPACE: u8 = 5;
 
 fn main() {
+    simple_logger::SimpleLogger::new().env().init().unwrap();
+
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
 
