@@ -66,9 +66,9 @@ impl World {
                 ..
             } => {
                 self.execute_command(Command::MovePlayer(player_id.clone(), Direction::Up));
-                if self.collides_with_stop() || !self.player.within_rect(&Self::playable_rect()) {
+                if self.collides() {
                     self.execute_command(Command::MovePlayer(player_id.clone(), Direction::Down));
-                    self.execute_command(Command::FacePlayer(player_id.clone(), Direction::Up));
+                    self.execute_command(Command::FacePlayer(player_id, Direction::Up));
                 }
             }
             Event::KeyDown {
@@ -76,9 +76,9 @@ impl World {
                 ..
             } => {
                 self.execute_command(Command::MovePlayer(player_id.clone(), Direction::Down));
-                if self.collides_with_stop() || !self.player.within_rect(&Self::playable_rect()) {
+                if self.collides() {
                     self.execute_command(Command::MovePlayer(player_id.clone(), Direction::Up));
-                    self.execute_command(Command::FacePlayer(player_id.clone(), Direction::Down));
+                    self.execute_command(Command::FacePlayer(player_id, Direction::Down));
                 }
             }
             Event::KeyDown {
@@ -86,9 +86,9 @@ impl World {
                 ..
             } => {
                 self.execute_command(Command::MovePlayer(player_id.clone(), Direction::Left));
-                if self.collides_with_stop() || !self.player.within_rect(&Self::playable_rect()) {
+                if self.collides() {
                     self.execute_command(Command::MovePlayer(player_id.clone(), Direction::Right));
-                    self.execute_command(Command::FacePlayer(player_id.clone(), Direction::Left));
+                    self.execute_command(Command::FacePlayer(player_id, Direction::Left));
                 }
             }
             Event::KeyDown {
@@ -96,14 +96,18 @@ impl World {
                 ..
             } => {
                 self.execute_command(Command::MovePlayer(player_id.clone(), Direction::Right));
-                if self.collides_with_stop() || !self.player.within_rect(&Self::playable_rect()) {
+                if self.collides() {
                     self.execute_command(Command::MovePlayer(player_id.clone(), Direction::Left));
-                    self.execute_command(Command::FacePlayer(player_id.clone(), Direction::Right));
+                    self.execute_command(Command::FacePlayer(player_id, Direction::Right));
                 }
             }
-            Event::KeyUp { .. } => self.execute_command(Command::StopPlayer(player_id.clone())),
+            Event::KeyUp { .. } => self.execute_command(Command::StopPlayer(player_id)),
             _ => {}
         }
+    }
+
+    fn collides(&mut self) -> bool {
+        self.collides_with_stop() || !self.player.within_rect(&Self::playable_rect())
     }
 
     /// Executes a command for world update.
@@ -111,12 +115,6 @@ impl World {
         debug!("{}", command);
 
         match command {
-            Command::SpawnPlayer(player_id, x, y) => &mut {
-                // TBD
-            },
-            Command::RemovePlayer(player_id) => &mut {
-                // TBD
-            },
             Command::FacePlayer(player_id, Direction::Down) => {
                 &mut self.get_player(player_id).face_down()
             },
@@ -163,7 +161,8 @@ impl World {
                         self.right_top_box_area.last_update = chrono::Utc::now().timestamp();
                     }
                 };
-            }
+            },
+            _ => unimplemented!()
         };
     }
 
