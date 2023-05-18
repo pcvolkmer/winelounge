@@ -82,7 +82,7 @@ impl FromStr for BoxAreaContent {
 impl Display for Command {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            Command::SpawnPlayer(player_id, x, y) => write!(f, "Spawn {}", player_id),
+            Command::SpawnPlayer(player_id, _x, _y) => write!(f, "Spawn {}", player_id),
             Command::RemovePlayer(player_id) => write!(f, "Face {}", player_id),
             Command::FacePlayer(player_id, direction) => write!(f, "Face {} {}", player_id, direction),
             Command::MovePlayer(player_id, direction) => write!(f, "Move {} {}", player_id, direction),

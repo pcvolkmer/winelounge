@@ -11,7 +11,7 @@ use crate::{Player, GLASS_SPACE};
 
 pub struct World {
     player: Player,
-    remote_player: Option<Player>,
+    _remote_player: Option<Player>,
     right_top_box_area: BoxArea,
     right_bottom_box_area: BoxArea,
     left_bottom_box_area: BoxArea,
@@ -25,7 +25,7 @@ impl World {
     pub fn init() -> World {
         World {
             player: Player::init(),
-            remote_player: None,
+            _remote_player: None,
             right_top_box_area: BoxArea::new(BoxAreaPosition::RightTop, BoxAreaContent::EmptyGlass),
             right_bottom_box_area: BoxArea::new(
                 BoxAreaPosition::RightBottom,
@@ -62,52 +62,64 @@ impl World {
         let player_id = self.player.id.clone();
         match event {
             Event::KeyDown {
-                keycode: Some(Keycode::Up) | Some(Keycode::W),
+                keycode: Some(Keycode::Up | Keycode::W),
                 ..
             } => {
                 self.execute_command(Command::MovePlayer(player_id.clone(), Direction::Up));
-                if self.collides() {
-                    self.execute_command(Command::MovePlayer(player_id.clone(), Direction::Down));
-                    self.execute_command(Command::FacePlayer(player_id, Direction::Up));
-                }
+                self.if_collides_execute(
+                    vec![
+                        Command::MovePlayer(player_id.clone(), Direction::Down),
+                        Command::FacePlayer(player_id, Direction::Up),
+                    ]
+                )
             }
             Event::KeyDown {
-                keycode: Some(Keycode::Down) | Some(Keycode::S),
+                keycode: Some(Keycode::Down | Keycode::S),
                 ..
             } => {
                 self.execute_command(Command::MovePlayer(player_id.clone(), Direction::Down));
-                if self.collides() {
-                    self.execute_command(Command::MovePlayer(player_id.clone(), Direction::Up));
-                    self.execute_command(Command::FacePlayer(player_id, Direction::Down));
-                }
+                self.if_collides_execute(
+                    vec![
+                        Command::MovePlayer(player_id.clone(), Direction::Up),
+                        Command::FacePlayer(player_id, Direction::Down)
+                    ]
+                )
             }
             Event::KeyDown {
-                keycode: Some(Keycode::Left) | Some(Keycode::A),
+                keycode: Some(Keycode::Left | Keycode::A),
                 ..
             } => {
                 self.execute_command(Command::MovePlayer(player_id.clone(), Direction::Left));
-                if self.collides() {
-                    self.execute_command(Command::MovePlayer(player_id.clone(), Direction::Right));
-                    self.execute_command(Command::FacePlayer(player_id, Direction::Left));
-                }
+                self.if_collides_execute(
+                    vec![
+                        Command::MovePlayer(player_id.clone(), Direction::Right),
+                        Command::FacePlayer(player_id, Direction::Left),
+                    ]
+                )
             }
             Event::KeyDown {
-                keycode: Some(Keycode::Right) | Some(Keycode::D),
+                keycode: Some(Keycode::Right | Keycode::D),
                 ..
             } => {
                 self.execute_command(Command::MovePlayer(player_id.clone(), Direction::Right));
-                if self.collides() {
-                    self.execute_command(Command::MovePlayer(player_id.clone(), Direction::Left));
-                    self.execute_command(Command::FacePlayer(player_id, Direction::Right));
-                }
+                self.if_collides_execute(
+                    vec![
+                        Command::MovePlayer(player_id.clone(), Direction::Left),
+                        Command::FacePlayer(player_id, Direction::Right),
+                    ]
+                )
             }
             Event::KeyUp { .. } => self.execute_command(Command::StopPlayer(player_id)),
             _ => {}
         }
     }
 
-    fn collides(&mut self) -> bool {
-        self.collides_with_stop() || !self.player.within_rect(&Self::playable_rect())
+    fn if_collides_execute(&mut self, commands: Vec<Command>) {
+        if self.collides_with_stop() || !self.player.within_rect(&Self::playable_rect()) {
+            commands.into_iter().for_each(|command| {
+                self.execute_command(command);
+            });
+        }
     }
 
     /// Executes a command for world update.
