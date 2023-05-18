@@ -112,6 +112,8 @@ impl World {
             Event::KeyUp { .. } => self.execute_command(Command::StopPlayer(player_id)),
             _ => {}
         }
+
+        self.handle_item_collisions();
     }
 
     fn if_collides_execute(&mut self, commands: Vec<Command>) {
@@ -187,7 +189,7 @@ impl World {
     }
 
     /// Handles both, collisions with lounge and any box area
-    pub fn handle_collisions(&mut self) {
+    pub fn handle_item_collisions(&mut self) {
         self.handle_lounge_collisions();
         self.handle_boxarea_collisions();
     }

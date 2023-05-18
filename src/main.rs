@@ -61,8 +61,6 @@ fn main() {
             world.update_box_areas();
         }
 
-        world.handle_collisions();
-
         world.render(&mut canvas, &texture, &font);
 
         ::std::thread::sleep(Duration::from_millis(25));
